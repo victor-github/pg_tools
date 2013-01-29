@@ -2,7 +2,8 @@
 
 == Purpose
 
-A gem that facilitates working with Postgresql schemas for multi-tenant applications. It provides rake tasks and hooks on create for your User model.
+A gem that facilitates working with Postgresql schemas for multi-tenant applications. It provides rake tasks and hooks on create for your User model. It also provides a before_filter on your ApplicationController that will set the search_path to the current_user(if one is logged in) or to the default one otherwise.
+
 The advantage of using this gem over others is that it keeps your private schema migrations separate from the public ones (in db/migrate/private_schemas) and also keeps different schema.rb files in
 db/schema.rb (public) and db/private/schema.rb (private) respectively.
 
@@ -30,7 +31,19 @@ In your User model:
   acts_as_tenant_aware
 
 This will provide the following functionality:
-  - when a new user is created in the system, it will create the Postgresql schema and load the private db structure from db/private/schema.rb
+  when a new user is created in the system, it will create the Postgresql schema and load the private db structure from db/private/schema.rb
+
+Handle the setting of search_path in your ApplicationController like so (for now):
+  before_filter :handle_search_path
+  
+  def handle_search_path
+    if current_user
+      PgTools.set_search_path current_user.id
+    else
+      PgTools.restore_default_search_path
+    end 
+  end
+
 
 == Rake Tasks
 
