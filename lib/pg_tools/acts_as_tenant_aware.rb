@@ -6,12 +6,14 @@ module PgTools
 
         private
         def prepare_tenant
-          create_schema
-          load_tables
+          unless PgTools.schemas.include?(id.to_s)
+            create_schema
+            load_tables
+          end
         end
 
         def create_schema
-          PgTools.create_schema id unless PgTools.schemas.include? id
+          PgTools.create_schema id
         end
 
         def load_tables
@@ -24,3 +26,4 @@ module PgTools
   end
 end
 ActiveRecord::Base.extend PgTools::ActsAsTenantAware
+
