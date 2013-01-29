@@ -19,7 +19,7 @@ It will dump schema.rb files inside
 == Usage
 
 Add to your Gemfile:
-  gem 'pg_tools', :git => 
+  gem 'pg_tools', :git => 'https://github.com/victor-github/pg_tools.git'
 
 Create a directory called "private_schemas" inside your db/migrate. This will hold your private migrations. Move any private migrations there.
 Create a directory called "private" inside db/. This will hold the private schema.rb.
