@@ -31,7 +31,7 @@ namespace :tenants do
       end
     end
 
-    desc "runs db:migrate on each a specific user's private schema"
+    desc "runs db:migrate on a specific user's private schema"
     task :migrate_tenant => :environment do
       return unless ENV['RAILS_ENV'] != 'test'
       verbose = ENV["VERBOSE"] ? ENV["VERBOSE"] == "true" : true
