@@ -19,13 +19,19 @@ namespace :tenants do
           Rake::Task['tenants:schema:dump'].invoke unless dumped_schema 
           dumped_schema = true 
         }
-        #need to insert everything into default path's schema_migrations as well, otherwise things like rspec will complain there are unrun migrations
+
+        #update "default" path's schema_migrations as well
         PgTools.in_search_path("public") {
           versions_in_public_schema = ActiveRecord::Migrator.get_all_versions
+
           (versions_in_private_schemas - versions_in_public_schema).each do |version|
             table = Arel::Table.new(ActiveRecord::Migrator.schema_migrations_table_name)
             stmt = table.compile_insert table["version"] => version.to_s
             ActiveRecord::Base.connection.insert stmt
+          end
+
+          (versions_in_public_schema-versions_in_private_schemas).each do |version|
+            ActiveRecord::Base.connection.execute("delete from schema_migrations where version='#{version}'")
           end
         }
       end
