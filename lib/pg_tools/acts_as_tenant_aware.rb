@@ -27,7 +27,7 @@ module PgTools
         end
 
         def tenant_schema_name
-          acts_as_tenant_aware_options[:schema_attribute].to_s
+          send acts_as_tenant_aware_options[:schema_attribute].to_s
         end
       end
     end
