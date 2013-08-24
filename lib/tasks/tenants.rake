@@ -42,13 +42,14 @@ namespace :tenants do
       return unless ENV['RAILS_ENV'] != 'test'
       verbose = ENV["VERBOSE"] ? ENV["VERBOSE"] == "true" : true
       ActiveRecord::Migration.verbose = verbose
-
-      user = User.find(ENV["USER_ID"])
-      puts "migrating user #{user.id}"
-      PgTools.in_search_path(user.id) {
+      tenantModelName = ENV["TENANT_MODEL"] || 'User'
+      tenantModel = tenantModelName.constantize
+      tenant = tenantModel.find(ENV["TENANT_ID"])
+      puts "migrating #{tenantModelName} #{tenant.id}"
+      PgTools.in_search_path(tenant.send(:tenant_schema_name)) {
         version = ENV["VERSION"] ? ENV["VERSION"].to_i : nil
         ActiveRecord::Migrator.migrate("db/migrate/private_schemas", version) 
-        ENV["search_path"] = user.id.to_s
+        ENV["search_path"] = tenant.send(:tenant_schema_name)
         Rake::Task['tenants:schema:dump'].invoke 
       }
     end
@@ -69,7 +70,9 @@ namespace :tenants do
     end
 
     task :load => :environment do
-      User.all.each {|u|
+      tenantModelName = ENV["TENANT_MODEL"] || 'User'
+      tenantModel = tenantModelName.constantize
+      tenantModel.all.each { |t|
         PgTools.set_search_path ENV["search_path"], false
         load "#{Rails.root}/db/private/schema.rb"
       }
