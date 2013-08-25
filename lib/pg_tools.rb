@@ -33,7 +33,7 @@ module PgTools
 
   def in_search_path(i, &block)
     prev_search_path = search_path
-    set_search_path(i)
+    set_search_path(i, false)
     block_return = yield
     set_search_path(prev_search_path)
     block_return
