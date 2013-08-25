@@ -14,7 +14,7 @@ http://blog.jerodsanto.net/2011/07/building-multi-tenant-rails-apps-with-postgre
 
 == Details
 
-This gem assumes you maintain your private schema migrations in db/migrate/private_migrations and your public ones in db/migrate.
+This gem assumes you maintain your private schema migrations in db/migrate/private_schemas and your public ones in db/migrate.
 It will dump schema.rb files inside 
 
 == Usage
