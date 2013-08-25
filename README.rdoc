@@ -56,6 +56,10 @@ If you want to set your tenant based on a subdomain, rather than per user, chang
 
 == Rake Tasks
 
+  tenants:db:init
+    Initial setup to be used after your first private migration is created.
+    Dumps an initial db/private/schema.rb based on your private migrations.
+
   tenants:db:migrate [TENANT_MODEL=Organization] [VERSION=XY]
     Migrates each user's tables within their own private Postgresql schema
     Dumps db/private/schema.rb (Note: it assumes all private schemas are structurally the same, so it only dumps this once)
