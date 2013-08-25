@@ -26,8 +26,13 @@ module PgTools
     ActiveRecord::Base.connection.execute sql
   end
 
+  def drop_schema(name)
+    sql = %{DROP SCHEMA "#{name}" CASCADE}
+    ActiveRecord::Base.connection.execute sql
+  end
+
   def schemas
-    sql = "SELECT nspname FROM pg_namespace WHERE nspname !~ '^pg_.*'"
+    sql = "SELECT nspname FROM pg_namespace WHERE nspname != 'information_schema' and nspname !~ '^pg_.*'"
     ActiveRecord::Base.connection.query(sql).flatten
   end
 
