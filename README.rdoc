@@ -2,7 +2,7 @@
 
 == Purpose
 
-A gem that facilitates working with Postgresql schemas for multi-tenant applications. It provides rake tasks and hooks on create for your User model. It also provides a before_filter on your ApplicationController that will set the search_path to the current_user(if one is logged in) or to the default one otherwise.
+A gem that facilitates working with Postgresql schemas for multi-tenant applications. It provides rake tasks and hooks on create for your tenant aware model. It also provides a before_filter on your ApplicationController that will set the search_path to the current_user(if one is logged in) or to the default one otherwise.
 
 The advantage of using this gem over others is that it keeps your private schema migrations separate from the public ones (in db/migrate/private_schemas) and also keeps different schema.rb files in
 db/schema.rb (public) and db/private/schema.rb (private) respectively.
@@ -14,7 +14,7 @@ http://blog.jerodsanto.net/2011/07/building-multi-tenant-rails-apps-with-postgre
 
 == Details
 
-This gem assumes you maintain your private schema migrations in db/migrate/private_migrations and your public ones in db/migrate.
+This gem assumes you maintain your private schema migrations in db/migrate/private_schemas and your public ones in db/migrate.
 It will dump schema.rb files inside 
 
 == Usage
@@ -27,38 +27,51 @@ Create a directory called "private" inside db/. This will hold the private schem
 
 Your public (default search path) migrations will continue to live in db/migrate. Your public schema.rb will continue to live at its usual place in db/.
 
-In your User model:
+In your model where each record will have its own private tenant schema:
   acts_as_tenant_aware
 
 This will provide the following functionality:
-  when a new user is created in the system, it will create the Postgresql schema and load the private db structure from db/private/schema.rb
+When a new tenant is created in the system, it will create the Postgresql schema and load the private db structure from db/private/schema.rb
 
-Handle the setting of search_path in your ApplicationController like so (for now):
+Handle the setting of search_path in your ApplicationController like so (when tenant is your application user model):
   before_filter :handle_search_path
   
   def handle_search_path
-    if current_user
-      PgTools.set_search_path current_user.id
+    tenant = get_tenant
+    if tenant
+      PgTools.set_search_path tenant.tenant_schema_name
     else
       PgTools.restore_default_search_path
     end 
   end
+  
+  def get_tenant
+    current_user
+  end
 
+If you want to set your tenant based on a subdomain, rather than per user, change the get_tenant method above to:
+  def get_tenant
+    MyTenantAwareModel.find_by_subdomain(request.subdomain)
+  end
 
 == Rake Tasks
 
-  tenants:db:migrate [VERSION=XY]
+  tenants:db:init
+    Initial setup to be used after your first private migration is created.
+    Dumps an initial db/private/schema.rb based on your private migrations.
+
+  tenants:db:migrate [TENANT_MODEL=Organization] [VERSION=XY]
     Migrates each user's tables within their own private Postgresql schema
     Dumps db/private/schema.rb (Note: it assumes all private schemas are structurally the same, so it only dumps this once)
     Updates schema_migrations in the private schema, as well as in the default schema. (the latter is important, otherwise tools like RSpec will complain that there are unrun migrations)
    
-  tenants:db:migrate_tenant USER_ID=XY
-    Migrates the tenant specified by the given USER_ID passed
+  tenants:db:migrate_tenant TENANT_ID=XY [TENANT_MODEL=Organization]
+    Migrates the tenant specified by the given TENANT_ID passed
   
   tenants:schema:dump search_path=xy
     Dumps db/private/schema.rb for given search_path.  (Note: it assumes all private schemas are structurally the same, so this can always be overridden by other private schemas)
 
-  tenants:schema:load search_path=xy [RAILS_ENV=env]
+  tenants:schema:load search_path=xy [RAILS_ENV=env] [TENANT_MODEL=Organization]
     Load the private db/private/schema.rb structure in the specified search_path, for the given Rails environment.
 
 = TODOs:
