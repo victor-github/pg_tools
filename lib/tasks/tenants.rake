@@ -1,6 +1,23 @@
 namespace :tenants do
   namespace :db do
     
+    desc "initialize the private tenant schema.rb (run after your first private migration has been created)"
+    task :init => :environment do
+      return unless ENV['RAILS_ENV'] != 'test'
+      verbose = ENV["VERBOSE"] ? ENV["VERBOSE"] == "true" : true
+      ActiveRecord::Migration.verbose = verbose
+
+      temp_schema = 'temporary_schema'
+      PgTools.create_schema temp_schema
+      PgTools.in_search_path(temp_schema) {
+        version = ENV["VERSION"] ? ENV["VERSION"].to_i : nil
+        ActiveRecord::Migrator.migrate("db/migrate/private_schemas", version)
+        ENV["search_path"] = tenant.tenant_schema_name
+        Rake::Task['tenants:schema:dump'].invoke
+      }
+      PgTools.drop_schema temp_schema
+    end
+
     desc "runs db:migrate on each user's private schema"
     task :migrate => :environment do
       return unless ENV['RAILS_ENV'] != 'test'
@@ -15,11 +32,11 @@ namespace :tenants do
         versions_in_private_schemas = []
         PgTools.in_search_path(tenant.tenant_schema_name) {
           version = ENV["VERSION"] ? ENV["VERSION"].to_i : nil
-          ActiveRecord::Migrator.migrate("db/migrate/private_schemas", version) 
+          ActiveRecord::Migrator.migrate("db/migrate/private_schemas", version)
           versions_in_private_schemas = ActiveRecord::Migrator.get_all_versions
           ENV["search_path"] = tenant.tenant_schema_name
-          Rake::Task['tenants:schema:dump'].invoke unless dumped_schema 
-          dumped_schema = true 
+          Rake::Task['tenants:schema:dump'].invoke unless dumped_schema
+          dumped_schema = true
         }
 
         #update "default" path's schema_migrations as well
@@ -32,7 +49,7 @@ namespace :tenants do
             ActiveRecord::Base.connection.insert stmt
           end
 
-          (versions_in_public_schema-versions_in_private_schemas).each do |version|
+          (versions_in_public_schema - versions_in_private_schemas).each do |version|
             ActiveRecord::Base.connection.execute("delete from schema_migrations where version='#{version}'")
           end
         }
@@ -50,7 +67,7 @@ namespace :tenants do
       puts "migrating #{tenantModelName} #{tenant.id}"
       PgTools.in_search_path(tenant.tenant_schema_name) {
         version = ENV["VERSION"] ? ENV["VERSION"].to_i : nil
-        ActiveRecord::Migrator.migrate("db/migrate/private_schemas", version) 
+        ActiveRecord::Migrator.migrate("db/migrate/private_schemas", version)
         ENV["search_path"] = tenant.tenant_schema_name
         Rake::Task['tenants:schema:dump'].invoke 
       }
@@ -64,9 +81,9 @@ namespace :tenants do
       require 'active_record/schema_dumper'
       filename = "#{Rails.root}/db/private/schema.rb"
       File.open(filename, "w:utf-8") do |file|
-        ActiveRecord::Base.establish_connection(Rails.env) 
+        ActiveRecord::Base.establish_connection(Rails.env)
         PgTools.in_search_path(ENV["search_path"]) {
-          ActiveRecord::SchemaDumper.dump(ActiveRecord::Base.connection, file) 
+          ActiveRecord::SchemaDumper.dump(ActiveRecord::Base.connection, file)
         }
       end
     end
