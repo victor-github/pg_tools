@@ -8,6 +8,10 @@ module PgTools
       class_eval do
         after_create :prepare_tenant 
 
+        def tenant_schema_name
+          send acts_as_tenant_aware_options[:schema_attribute].to_s
+        end
+
         private
         def prepare_tenant
           unless PgTools.schemas.include?(tenant_schema_name)
@@ -26,9 +30,6 @@ module PgTools
           }
         end
 
-        def tenant_schema_name
-          send acts_as_tenant_aware_options[:schema_attribute].to_s
-        end
       end
     end
   end
