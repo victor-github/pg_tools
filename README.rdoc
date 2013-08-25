@@ -53,7 +53,7 @@ Handle the setting of search_path in your ApplicationController like so (for now
     Updates schema_migrations in the private schema, as well as in the default schema. (the latter is important, otherwise tools like RSpec will complain that there are unrun migrations)
    
   tenants:db:migrate_tenant TENANT_ID=XY [TENANT_MODEL=Organization]
-    Migrates the tenant specified by the given USER_ID passed
+    Migrates the tenant specified by the given TENANT_ID passed
   
   tenants:schema:dump search_path=xy
     Dumps db/private/schema.rb for given search_path.  (Note: it assumes all private schemas are structurally the same, so this can always be overridden by other private schemas)
