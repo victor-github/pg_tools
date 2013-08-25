@@ -47,7 +47,7 @@ Handle the setting of search_path in your ApplicationController like so (for now
 
 == Rake Tasks
 
-  tenants:db:migrate [VERSION=XY]
+  tenants:db:migrate [TENANT_MODEL=Organization] [VERSION=XY]
     Migrates each user's tables within their own private Postgresql schema
     Dumps db/private/schema.rb (Note: it assumes all private schemas are structurally the same, so it only dumps this once)
     Updates schema_migrations in the private schema, as well as in the default schema. (the latter is important, otherwise tools like RSpec will complain that there are unrun migrations)
