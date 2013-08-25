@@ -8,14 +8,16 @@ namespace :tenants do
       ActiveRecord::Migration.verbose = verbose
 
       dumped_schema = false
-      User.all.each do |user|
-        puts "migrating user #{user.id}"
+      tenantModelName = ENV["TENANT_MODEL"] || 'User'
+      tenantModel = tenantModelName.constantize
+      tenantModel.all.each do |tenant|
+        puts "migrating tenant #{tenant.tenant_schema_name}"
         versions_in_private_schemas = []
-        PgTools.in_search_path(user.id) {
+        PgTools.in_search_path(tenant.tenant_schema_name) {
           version = ENV["VERSION"] ? ENV["VERSION"].to_i : nil
           ActiveRecord::Migrator.migrate("db/migrate/private_schemas", version) 
           versions_in_private_schemas = ActiveRecord::Migrator.get_all_versions
-          ENV["search_path"] = user.id.to_s
+          ENV["search_path"] = tenant.tenant_schema_name
           Rake::Task['tenants:schema:dump'].invoke unless dumped_schema 
           dumped_schema = true 
         }
@@ -46,10 +48,10 @@ namespace :tenants do
       tenantModel = tenantModelName.constantize
       tenant = tenantModel.find(ENV["TENANT_ID"])
       puts "migrating #{tenantModelName} #{tenant.id}"
-      PgTools.in_search_path(tenant.send(:tenant_schema_name)) {
+      PgTools.in_search_path(tenant.tenant_schema_name) {
         version = ENV["VERSION"] ? ENV["VERSION"].to_i : nil
         ActiveRecord::Migrator.migrate("db/migrate/private_schemas", version) 
-        ENV["search_path"] = tenant.send(:tenant_schema_name)
+        ENV["search_path"] = tenant.tenant_schema_name
         Rake::Task['tenants:schema:dump'].invoke 
       }
     end
