@@ -12,7 +12,7 @@ namespace :tenants do
       PgTools.in_search_path(temp_schema) {
         version = ENV["VERSION"] ? ENV["VERSION"].to_i : nil
         ActiveRecord::Migrator.migrate("db/migrate/private_schemas", version)
-        ENV["search_path"] = tenant.tenant_schema_name
+        ENV["search_path"] = temp_schema
         Rake::Task['tenants:schema:dump'].invoke
       }
       PgTools.drop_schema temp_schema
