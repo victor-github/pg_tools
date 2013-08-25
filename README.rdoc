@@ -37,23 +37,21 @@ Handle the setting of search_path in your ApplicationController like so (when te
   before_filter :handle_search_path
   
   def handle_search_path
-    if current_user
-      PgTools.set_search_path current_user.tenant_schema_name
+    tenant = get_tenant
+    if tenant
+      PgTools.set_search_path tenant.tenant_schema_name
     else
       PgTools.restore_default_search_path
     end 
   end
+  
+  def get_tenant
+    current_user
+  end
 
-If you want to set your tenant based on a subdomain, use the following in ApplicationController:
-  before_filter :handle_search_path
-
-  def handle_search_path
-    @tenant = MyTenantAwareModel.find_by_subdomain(request.subdomain)
-    if @tenant
-      PgTools.set_search_path @tenant.tenant_schema_name
-    else
-      PgTools.restore_default_search_path
-    end
+If you want to set your tenant based on a subdomain, rather than per user, change the get_tenant method above to:
+  def get_tenant
+    MyTenantAwareModel.find_by_subdomain(request.subdomain)
   end
 
 == Rake Tasks
