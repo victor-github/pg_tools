@@ -48,10 +48,6 @@ namespace :tenants do
             stmt = table.compile_insert table["version"] => version.to_s
             ActiveRecord::Base.connection.insert stmt
           end
-
-          (versions_in_public_schema - versions_in_private_schemas).each do |version|
-            ActiveRecord::Base.connection.execute("delete from schema_migrations where version='#{version}'")
-          end
         }
       end
     end

@@ -16,7 +16,7 @@ module PgTools
         def prepare_tenant
           unless PgTools.schemas.include?(tenant_schema_name)
             create_schema
-            load_tables
+            migrate_tables
           end
         end
 
@@ -24,12 +24,11 @@ module PgTools
           PgTools.create_schema tenant_schema_name
         end
 
-        def load_tables
+        def migrate_tables
           PgTools.in_search_path(tenant_schema_name) {
-            load "#{Rails.root}/db/private/schema.rb"
+            ActiveRecord::Migrator.migrate('db/migrate/private_schemas')
           }
         end
-
       end
     end
   end
