@@ -58,15 +58,29 @@ namespace :tenants do
       verbose = ENV["VERBOSE"] ? ENV["VERBOSE"] == "true" : true
       ActiveRecord::Migration.verbose = verbose
 
+      dumped_schema = false
       tenantModelName = ENV["TENANT_MODEL"] || 'User'
       tenantModel = tenantModelName.constantize
       tenantModel.all.each do |tenant|
+        versions_in_private_schemas = []
         puts "rollback tenant #{tenant.tenant_schema_name}"
         PgTools.in_search_path(tenant.tenant_schema_name) {
           step = ENV['STEP'] ? ENV['STEP'].to_i : 1
           ActiveRecord::Migrator.rollback("db/migrate/private_schemas", step)
+          versions_in_private_schemas = ActiveRecord::Migrator.get_all_versions
           ENV["search_path"] = tenant.tenant_schema_name
-          Rake::Task['tenants:schema:dump'].invoke
+          Rake::Task['tenants:schema:dump'].invoke unless dumped_schema
+          dumped_schema = true
+        }
+
+        PgTools.in_search_path("public") {
+          versions_in_public_schema = ActiveRecord::Migrator.get_all_versions
+
+          (versions_in_private_schemas - versions_in_public_schema).each do |version|
+            table = Arel::Table.new(ActiveRecord::Migrator.schema_migrations_table_name)
+            stmt = table.compile_insert table["version"] => version.to_s
+            ActiveRecord::Base.connection.insert stmt
+          end
         }
       end
     end
