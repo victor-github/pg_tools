@@ -1,6 +1,6 @@
 Gem::Specification.new do |s|
   s.name        = 'pg_tools'
-  s.version     = '0.0.2'
+  s.version     = '0.0.3'
   s.date        = '2013-08-25'
   s.summary     = "Allows Rails apps to easily work with Postgresql schemas, for multi-tenant applications"
   s.description = "Allows Rails apps to easily work with Postgresql schemas, for multi-tenant applications"
